@@ -1,0 +1,56 @@
+diff -x .git -ruN tmp/system/core/adb/adb_utils.cpp system/core/adb/adb_utils.cpp
+--- tmp/system/core/adb/adb_utils.cpp	2017-02-25 10:38:59.000000000 +0800
++++ system/core/adb/adb_utils.cpp	2017-02-25 09:56:45.000000000 +0800
+@@ -259,7 +259,7 @@
+     }
+     return home_str;
+ #else
+-    if (const char* const home = getenv("HOME")) {
++    if (const char* const home = getenv("ANDROID_DATA")) {
+         return home;
+     }
+     return {};
+diff -x .git -ruN tmp/system/core/adb/diagnose_usb.cpp system/core/adb/diagnose_usb.cpp
+--- tmp/system/core/adb/diagnose_usb.cpp	2017-02-25 10:38:59.000000000 +0800
++++ system/core/adb/diagnose_usb.cpp	2017-02-24 18:48:46.000000000 +0800
+@@ -32,28 +32,7 @@
+ // Returns a message describing any potential problems we find with udev, or nullptr if we can't
+ // find plugdev information (i.e. udev is not installed).
+ static const char* GetUdevProblem() {
+-#if defined(__linux__)
+-    errno = 0;
+-    group* plugdev_group = getgrnam("plugdev");
+-
+-    if (plugdev_group == nullptr) {
+-        if (errno != 0) {
+-            perror("failed to read plugdev group info");
+-        }
+-        // We can't give any generally useful advice here, just let the caller print the help URL.
+-        return nullptr;
+-    }
+-
+-    // getgroups(2) indicates that the group_member() may not check the egid so we check it
+-    // additionally just to be sure.
+-    if (group_member(plugdev_group->gr_gid) || getegid() == plugdev_group->gr_gid) {
+-        // The user is in plugdev so the problem is likely with the udev rules.
+-        return "verify udev rules";
+-    }
+-    return "udev requires plugdev group membership";
+-#else
+     return nullptr;
+-#endif
+ }
+ 
+ // Short help text must be a single line, and will look something like:
+diff -x .git -ruN tmp/system/core/fastboot/protocol.cpp system/core/fastboot/protocol.cpp
+--- tmp/system/core/fastboot/protocol.cpp	2017-02-25 10:39:00.000000000 +0800
++++ system/core/fastboot/protocol.cpp	2017-02-25 10:32:32.000000000 +0800
+@@ -27,7 +27,7 @@
+  */
+ 
+ #define round_down(a, b) \
+-    ({ typeof(a) _a = (a); typeof(b) _b = (b); _a - (_a % _b); })
++    ({ __typeof__(a) _a = (a); __typeof__(b) _b = (b); _a - (_a % _b); })
+ 
+ #include <stdio.h>
+ #include <stdlib.h>
