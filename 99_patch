@@ -11,6 +11,19 @@ index 0645122b7..35e0f4bc5 100644
          return home;
      }
      return {};
+diff --git a/adb/client/main.cpp b/adb/client/main.cpp
+index ba4737f8d..76fe8b34f 100644
+--- a/adb/client/main.cpp
++++ b/adb/client/main.cpp
+@@ -56,7 +56,7 @@ static std::string GetLogFilePath() {
+     return temp_path_utf8 + log_name;
+ #else
+     const char* tmp_dir = getenv("TMPDIR");
+-    if (tmp_dir == nullptr) tmp_dir = "/tmp";
++    if (tmp_dir == nullptr) tmp_dir = "/data/local/tmp";
+     return android::base::StringPrintf("%s/adb.%u.log", tmp_dir, getuid());
+ #endif
+ }
 diff --git a/adb/diagnose_usb.cpp b/adb/diagnose_usb.cpp
 index 0f067b0ec..1138f8df0 100644
 --- a/adb/diagnose_usb.cpp
