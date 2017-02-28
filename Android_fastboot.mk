@@ -4,10 +4,7 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE := fastboot
 
-LOCAL_CPPFLAGS := -std=c++14
-
 LOCAL_CFLAGS := \
-    -Wno-unknown-attributes \
     -Wall -Wextra -Werror -Wunreachable-code \
     -DFASTBOOT_REVISION='"shakalaca-$(shell date +%Y-%m-%d)"' \
     -DUSE_F2FS
@@ -44,8 +41,8 @@ LOCAL_SRC_FILES += \
 LOCAL_SRC_FILES += \
     src/system/core/adb/diagnose_usb.cpp
 
-LOCAL_LDLIBS += -lz
-LOCAL_STATIC_LIBRARIES := selinux ext4_utils f2fs_utils sparse log base cutils usb
+LOCAL_LDLIBS += -lz -llog
+LOCAL_STATIC_LIBRARIES := selinux ext4_utils f2fs_utils sparse base cutils
 LOCAL_CXX_STL := libc++_static
 
 include $(BUILD_EXECUTABLE)

@@ -20,6 +20,7 @@ build() {
     mkdir -p $DIST_DIR/$arch
   fi
   mv $BUILD_DIR/crypto/libcrypto.a $DIST_DIR/$arch
+  mv $BUILD_DIR/decrepit/libdecrepit.a $DIST_DIR/$arch
 }
 
 cd $ROOT_DIR

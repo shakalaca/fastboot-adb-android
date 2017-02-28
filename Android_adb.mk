@@ -7,18 +7,10 @@ LOCAL_MODULE := adb
 LOCAL_CPPFLAGS := -std=c++14
 
 LOCAL_CFLAGS := \
-    -Wno-unknown-attributes \
-    -fvisibility=hidden \
-    -Wall -Wextra -Werror \
-    -Wno-unused-parameter \
-    -Wno-missing-field-initializers \
-    -Wvla \
-    -Wexit-time-destructors \
     -DADB_REVISION='"shakalaca-$(shell date +%Y-%m-%d)"' \
     -DADB_HOST=1 -DADB_HOST_ON_TARGET=1 -D_GNU_SOURCE
 
 LOCAL_C_INCLUDES := \
-    src/bionic/libc/include \
     src/system/core/adb \
     src/system/core/include \
     src/system/core/mkbootimg \
@@ -58,7 +50,8 @@ LOCAL_SRC_FILES := \
 LOCAL_SRC_FILES += \
     src/system/core/libutils/FileMap.cpp
 
-LOCAL_STATIC_LIBRARIES := crypto base log cutils usb
+LOCAL_LDLIBS += -llog
+LOCAL_STATIC_LIBRARIES := crypto decrepit base cutils
 LOCAL_CXX_STL := libc++_static
 
 include $(BUILD_EXECUTABLE)

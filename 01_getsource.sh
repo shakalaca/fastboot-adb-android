@@ -6,7 +6,6 @@ clone() {
 }
 
 mkdir src
-clone bionic
 
 mkdir src/system
 clone system/core
@@ -14,9 +13,8 @@ clone system/extras
 
 mkdir src/external
 clone external/gtest
-clone external/selinux
+clone external/libselinux
 clone external/pcre
-clone external/libusb
 clone external/f2fs-tools
 
 git clone https://boringssl.googlesource.com/boringssl src/boringssl

@@ -1,6 +1,53 @@
 LOCAL_PATH := $(call my-dir)
 
 ##############################################################################
+# libpcre
+##############################################################################
+include $(CLEAR_VARS)
+
+LOCAL_MODULE := libpcre
+
+LOCAL_CFLAGS := \
+    -DHAVE_CONFIG_H \
+    -Wno-self-assign \
+    -Wno-unused-parameter
+
+LOCAL_EXPORT_C_INCLUDES := \
+    src/external/pcre
+
+LOCAL_C_INCLUDES := \
+    src/external/pcre \
+    src/external/pcre/dist
+
+LOCAL_SRC_FILES := \
+    src/external/pcre/pcre_chartables.c \
+    src/external/pcre/dist/pcre_byte_order.c \
+    src/external/pcre/dist/pcre_compile.c \
+    src/external/pcre/dist/pcre_config.c \
+    src/external/pcre/dist/pcre_dfa_exec.c \
+    src/external/pcre/dist/pcre_exec.c \
+    src/external/pcre/dist/pcre_fullinfo.c \
+    src/external/pcre/dist/pcre_get.c \
+    src/external/pcre/dist/pcre_globals.c \
+    src/external/pcre/dist/pcre_jit_compile.c \
+    src/external/pcre/dist/pcre_maketables.c \
+    src/external/pcre/dist/pcre_newline.c \
+    src/external/pcre/dist/pcre_ord2utf8.c \
+    src/external/pcre/dist/pcre_refcount.c \
+    src/external/pcre/dist/pcre_string_utils.c \
+    src/external/pcre/dist/pcre_study.c \
+    src/external/pcre/dist/pcre_tables.c \
+    src/external/pcre/dist/pcre_ucd.c \
+    src/external/pcre/dist/pcre_valid_utf8.c \
+    src/external/pcre/dist/pcre_version.c \
+    src/external/pcre/dist/pcre_xclass.c \
+    src/external/pcre/dist/pcrecpp.cc \
+    src/external/pcre/dist/pcre_scanner.cc \
+    src/external/pcre/dist/pcre_stringpiece.cc
+
+include $(BUILD_STATIC_LIBRARY)
+
+##############################################################################
 # libselinux
 ##############################################################################
 include $(CLEAR_VARS)
@@ -8,30 +55,24 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := libselinux
 
 LOCAL_CFLAGS := \
-    -Wno-implicit-function-declaration \
-    -Wno-unknown-attributes
+    -DHOST
 
 LOCAL_EXPORT_C_INCLUDES := \
-    src/external/selinux/libselinux/include
+    src/external/libselinux/include
 
 LOCAL_C_INCLUDES := \
-    src/bionic/libc/include \
-    src/external/selinux/libselinux/include \
+    src/external/libselinux/include \
     src/external/pcre
 
 LOCAL_SRC_FILES := \
-    src/external/selinux/libselinux/src/label.c \
-    src/external/selinux/libselinux/src/freecon.c \
-    src/external/selinux/libselinux/src/label_file.c \
-    src/external/selinux/libselinux/src/callbacks.c \
-    src/external/selinux/libselinux/src/label_support.c \
-    src/external/selinux/libselinux/src/matchpathcon.c \
-    src/external/selinux/libselinux/src/setrans_client.c \
-    src/external/selinux/libselinux/src/sha1.c \
-    src/external/selinux/libselinux/src/booleans.c \
-    src/external/selinux/libselinux/src/enabled.c \
-    src/external/selinux/libselinux/src/check_context.c \
-    src/external/selinux/libselinux/src/init.c
+    src/external/libselinux/src/callbacks.c \
+    src/external/libselinux/src/check_context.c \
+    src/external/libselinux/src/freecon.c \
+    src/external/libselinux/src/init.c \
+    src/external/libselinux/src/label.c \
+    src/external/libselinux/src/label_file.c \
+    src/external/libselinux/src/label_android_property.c \
+    src/external/libselinux/src/label_support.c
 
 include $(BUILD_STATIC_LIBRARY)
 
@@ -69,8 +110,7 @@ LOCAL_EXPORT_C_INCLUDES := \
     src/system/extras/ext4_utils
 
 LOCAL_C_INCLUDES := \
-    src/system/core/libsparse/include \
-    src/external/selinux/libselinux/include
+    src/system/core/libsparse/include
 
 LOCAL_SRC_FILES += \
     src/system/extras/ext4_utils/allocate.c \
@@ -100,7 +140,6 @@ LOCAL_EXPORT_C_INCLUDES := \
 
 LOCAL_C_INCLUDES := \
     src/system/core/libsparse/include \
-    src/external/selinux/libselinux/include \
     src/external/f2fs-tools/include \
     src/external/f2fs-tools/mkfs
 
@@ -152,13 +191,12 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := libbase
 
 LOCAL_CFLAGS := \
-    -Wno-unknown-attributes
+    -D__USE_BSD
 
 LOCAL_EXPORT_C_INCLUDES := \
     src/system/core/base/include
 
 LOCAL_C_INCLUDES := \
-    src/bionic/libc/include \
     src/system/core/include \
     src/system/core/base/include
 
@@ -180,11 +218,9 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := libcutils
 
 LOCAL_CFLAGS := \
-    -Wno-unknown-attributes \
-    -Wall -Wextra -std=gnu90
+    -std=gnu90
 
 LOCAL_C_INCLUDES := \
-    src/bionic/libc/include \
     src/system/core/include
 
 LOCAL_SRC_FILES += \
@@ -220,11 +256,9 @@ LOCAL_SRC_FILES += \
     src/system/core/libcutils/debugger.c \
     src/system/core/libcutils/klog.c \
     src/system/core/libcutils/partition_utils.c \
-    src/system/core/libcutils/properties.c \
     src/system/core/libcutils/qtaguid.c \
     src/system/core/libcutils/trace-dev.c \
-    src/system/core/libcutils/uevent.c \
-    src/bionic/libc/bionic/netinet_in.cpp
+    src/system/core/libcutils/uevent.c
 
 ifeq ($(TARGET_ARCH_ABI),armeabi-v7a)
 LOCAL_SRC_FILES += \
@@ -248,34 +282,7 @@ LOCAL_SRC_FILES += \
     src/system/core/libcutils/arch-x86_64/android_memset32.S
 endif
 
-LOCAL_STATIC_LIBRARIES := log
-LOCAL_CLANG := true
 LOCAL_SANITIZE := integer
-
-include $(BUILD_STATIC_LIBRARY)
-
-##############################################################################
-# libusb
-##############################################################################
-include $(CLEAR_VARS)
-
-LOCAL_MODULE := libusb
-
-LOCAL_CFLAGS := \
-    -Wno-implicit-function-declaration \
-    -Wno-tautological-compare
-
-LOCAL_C_INCLUDES := \
-    src/external/libusb \
-    src/external/libusb/libusb \
-    src/external/libusb/libusb/os
-
-LOCAL_SRC_FILES += \
-    src/external/libusb/libusb/core.c \
-    src/external/libusb/libusb/descriptor.c \
-    src/external/libusb/libusb/io.c \
-    src/external/libusb/libusb/sync.c \
-    src/external/libusb/libusb/os/linux_usbfs.c
 
 include $(BUILD_STATIC_LIBRARY)
 
@@ -289,4 +296,14 @@ LOCAL_EXPORT_C_INCLUDES := src/boringssl/include
 LOCAL_SRC_FILES := src/boringssl/dist/$(TARGET_ARCH_ABI)/libcrypto.a
 
 include $(PREBUILT_STATIC_LIBRARY)
-LOCAL_PATH := $(call my-dir)
+
+##############################################################################
+# libdecrepit
+##############################################################################
+include $(CLEAR_VARS)
+
+LOCAL_MODULE := libdecrepit
+LOCAL_EXPORT_C_INCLUDES := src/boringssl/include
+LOCAL_SRC_FILES := src/boringssl/dist/$(TARGET_ARCH_ABI)/libdecrepit.a
+
+include $(PREBUILT_STATIC_LIBRARY)
