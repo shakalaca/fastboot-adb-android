@@ -80,7 +80,7 @@ index 63b7df6f2..8ce18a653 100644
          // No colon in service string.
          return nullptr;
 diff --git a/base/logging.cpp b/base/logging.cpp
-index 174187149..bd029460d 100644
+index 174187149..c82ca3e37 100644
 --- a/base/logging.cpp
 +++ b/base/logging.cpp
 @@ -46,7 +46,7 @@
@@ -92,21 +92,19 @@ index 174187149..bd029460d 100644
  #include "cutils/log.h"
  #else
  #include <sys/types.h>
-@@ -223,12 +223,14 @@ void LogdLogger::operator()(LogId id, LogSeverity severity, const char* tag,
- 
+@@ -224,10 +224,10 @@ void LogdLogger::operator()(LogId id, LogSeverity severity, const char* tag,
    log_id lg_id = kLogIdToAndroidLogId[id];
  
-+#if 0
    if (priority == ANDROID_LOG_FATAL) {
-     __android_log_buf_print(lg_id, priority, tag, "%s:%u] %s", file, line,
+-    __android_log_buf_print(lg_id, priority, tag, "%s:%u] %s", file, line,
++    __android_log_print(priority, tag, "%s:%u] %s", file, line,
                              message);
    } else {
-     __android_log_buf_print(lg_id, priority, tag, "%s", message);
+-    __android_log_buf_print(lg_id, priority, tag, "%s", message);
++    __android_log_print(priority, tag, "%s", message);
    }
-+#endif
  }
  #endif
- 
 diff --git a/fastboot/protocol.cpp b/fastboot/protocol.cpp
 index 4850b4a0d..6bfdce625 100644
 --- a/fastboot/protocol.cpp
