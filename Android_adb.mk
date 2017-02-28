@@ -52,7 +52,6 @@ LOCAL_SRC_FILES += \
 
 LOCAL_LDLIBS += -llog
 LOCAL_STATIC_LIBRARIES := crypto decrepit base cutils
-LOCAL_CXX_STL := libc++_static
 
 include $(BUILD_EXECUTABLE)
 

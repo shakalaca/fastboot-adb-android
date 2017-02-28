@@ -43,7 +43,6 @@ LOCAL_SRC_FILES += \
 
 LOCAL_LDLIBS += -lz -llog
 LOCAL_STATIC_LIBRARIES := selinux ext4_utils f2fs_utils sparse base cutils
-LOCAL_CXX_STL := libc++_static
 
 include $(BUILD_EXECUTABLE)
 
