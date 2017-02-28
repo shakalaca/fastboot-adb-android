@@ -13,7 +13,7 @@ build() {
   cd $BUILD_DIR
   cmake -DANDROID_ABI=$arch \
       -DCMAKE_TOOLCHAIN_FILE=$ROOT_DIR/third_party/android-cmake/android.toolchain.cmake \
-      -DANDROID_NATIVE_API_LEVEL=25 \
+      -DANDROID_NATIVE_API_LEVEL=21 \
       -GNinja $ROOT_DIR
   ninja
   if [ ! -d $DIST_DIR/$arch ]; then
