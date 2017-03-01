@@ -1,5 +1,7 @@
 LOCAL_PATH := $(call my-dir)
 
+fastboot_version := $(shell git -C $(LOCAL_PATH) rev-parse --short=12 HEAD 2>/dev/null)-android
+
 include $(CLEAR_VARS)
 
 LOCAL_MODULE := fastboot
@@ -7,14 +9,13 @@ LOCAL_MODULE := fastboot
 LOCAL_CFLAGS := \
     -DANDROID_HOST_BUILD -DADB_HOST \
     -Wall -Wextra -Werror -Wunreachable-code \
-    -DFASTBOOT_REVISION='"shakalaca-$(shell date +%Y-%m-%d)"' \
+    -DFASTBOOT_REVISION='"shakalaca-$(shell date +%Y-%m-%d)-$(fastboot_version)"' \
     -DUSE_F2FS
 
 LOCAL_C_INCLUDES := \
     src/system/core/include \
     src/system/core/adb \
     src/system/core/mkbootimg \
-    src/system/extras/f2fs_utils \
     src/external/gtest/include
 
 LOCAL_SRC_FILES := \
@@ -42,6 +43,7 @@ LOCAL_SRC_FILES += \
 LOCAL_SRC_FILES += \
     src/system/core/adb/diagnose_usb.cpp
 
+LOCAL_LDFLAGS := -ldl -rdynamic -Wl,-rpath,.
 LOCAL_LDLIBS += -lz
 LOCAL_STATIC_LIBRARIES := selinux ext4_utils f2fs_utils sparse base cutils log_fake
 

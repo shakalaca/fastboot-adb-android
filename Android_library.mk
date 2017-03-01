@@ -61,8 +61,7 @@ LOCAL_EXPORT_C_INCLUDES := \
     src/external/libselinux/include
 
 LOCAL_C_INCLUDES := \
-    src/external/libselinux/include \
-    src/external/pcre
+    src/external/libselinux/include
 
 LOCAL_SRC_FILES := \
     src/external/libselinux/src/callbacks.c \
@@ -74,6 +73,8 @@ LOCAL_SRC_FILES := \
     src/external/libselinux/src/label_android_property.c \
     src/external/libselinux/src/label_support.c
 
+LOCAL_STATIC_LIBRARIES := pcre
+
 include $(BUILD_STATIC_LIBRARY)
 
 ##############################################################################
@@ -82,6 +83,9 @@ include $(BUILD_STATIC_LIBRARY)
 include $(CLEAR_VARS)
 
 LOCAL_MODULE := libsparse
+
+LOCAL_CFLAGS := \
+    -Werror
 
 LOCAL_EXPORT_C_INCLUDES := \
     src/system/core/libsparse/include
@@ -106,25 +110,26 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE := libext4_utils
 
+LOCAL_CFLAGS := \
+    -fno-strict-aliasing
+
 LOCAL_EXPORT_C_INCLUDES := \
     src/system/extras/ext4_utils
 
-LOCAL_C_INCLUDES := \
-    src/system/core/libsparse/include
-
 LOCAL_SRC_FILES += \
+    src/system/extras/ext4_utils/make_ext4fs.c \
+    src/system/extras/ext4_utils/ext4fixup.c \
+    src/system/extras/ext4_utils/ext4_utils.c \
     src/system/extras/ext4_utils/allocate.c \
     src/system/extras/ext4_utils/contents.c \
-    src/system/extras/ext4_utils/crc16.c \
-    src/system/extras/ext4_utils/ext4_sb.c \
-    src/system/extras/ext4_utils/ext4_utils.c \
     src/system/extras/ext4_utils/extent.c \
     src/system/extras/ext4_utils/indirect.c \
-    src/system/extras/ext4_utils/make_ext4fs.c \
     src/system/extras/ext4_utils/sha1.c \
-    src/system/extras/ext4_utils/wipe.c
+    src/system/extras/ext4_utils/wipe.c \
+    src/system/extras/ext4_utils/crc16.c \
+    src/system/extras/ext4_utils/ext4_sb.c
 
-LOCAL_STATIC_LIBRARIES := selinux
+LOCAL_STATIC_LIBRARIES := selinux sparse
 
 include $(BUILD_STATIC_LIBRARY)
 
@@ -135,11 +140,13 @@ include $(CLEAR_VARS)
 
 LOCAL_MODULE := libf2fs_utils
 
+LOCAL_CFLAGS := \
+    -Wno-unused-parameter
+
 LOCAL_EXPORT_C_INCLUDES := \
     src/system/extras/f2fs_utils
 
 LOCAL_C_INCLUDES := \
-    src/system/core/libsparse/include \
     src/external/f2fs-tools/include \
     src/external/f2fs-tools/mkfs
 
@@ -148,7 +155,7 @@ LOCAL_SRC_FILES += \
     src/system/extras/f2fs_utils/f2fs_ioutils.c \
     src/system/extras/f2fs_utils/f2fs_dlutils.c
 
-LOCAL_STATIC_LIBRARIES := selinux
+LOCAL_STATIC_LIBRARIES := selinux sparse
 
 include $(BUILD_STATIC_LIBRARY)
 
@@ -160,8 +167,9 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := liblog_fake
 
 LOCAL_CFLAGS := \
-    -DFAKE_LOG_DEVICE \
-    -DSNET_EVENT_LOG_TAG=1397638484 -DLIBLOG_LOG_TAG=1005
+    -DFAKE_LOG_DEVICE=1 \
+    -DSNET_EVENT_LOG_TAG=1397638484 -DLIBLOG_LOG_TAG=1005 \
+    -Werror -fvisibility=hidden
 
 LOCAL_EXPORT_C_INCLUDES := \
     src/system/core/liblog
@@ -189,6 +197,12 @@ include $(BUILD_STATIC_LIBRARY)
 include $(CLEAR_VARS)
 
 LOCAL_MODULE := libbase
+
+LOCAL_CPPFLAG := \
+    -Wall \
+    -Wextra \
+    -Werror \
+    -Wexit-time-destructors \
 
 LOCAL_CFLAGS := \
     -DANDROID_HOST_BUILD \
@@ -219,7 +233,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := libcutils
 
 LOCAL_CFLAGS := \
-    -std=gnu90
+    -Werror -Wall -Wextra -std=gnu90
 
 LOCAL_C_INCLUDES := \
     src/system/core/include

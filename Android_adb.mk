@@ -1,5 +1,7 @@
 LOCAL_PATH := $(call my-dir)
 
+adb_version := $(shell git -C $(LOCAL_PATH) rev-parse --short=12 HEAD 2>/dev/null)-android
+
 include $(CLEAR_VARS)
 
 LOCAL_MODULE := adb
@@ -7,7 +9,13 @@ LOCAL_MODULE := adb
 LOCAL_CPPFLAGS := -std=c++14
 
 LOCAL_CFLAGS := \
-    -DADB_REVISION='"shakalaca-$(shell date +%Y-%m-%d)"' \
+    -Wall -Wextra -Werror \
+    -Wno-unused-parameter \
+    -Wno-missing-field-initializers \
+    -Wvla \
+    -Wexit-time-destructors \
+    -fvisibility=hidden \
+    -DADB_REVISION='"shakalaca-$(shell date +%Y-%m-%d)-$(adb_version)"' \
     -DADB_HOST=1 -DADB_HOST_ON_TARGET=1 -D_GNU_SOURCE
 
 LOCAL_C_INCLUDES := \
@@ -50,6 +58,7 @@ LOCAL_SRC_FILES := \
 LOCAL_SRC_FILES += \
     src/system/core/libutils/FileMap.cpp
 
+LOCAL_LDLIBS := -ldl
 LOCAL_STATIC_LIBRARIES := crypto decrepit base cutils log_fake
 
 include $(BUILD_EXECUTABLE)
