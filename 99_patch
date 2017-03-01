@@ -1,62 +1,48 @@
 diff --git a/adb/adb_utils.cpp b/adb/adb_utils.cpp
-index 0645122b7..35e0f4bc5 100644
+index 0645122b7..9548588b4 100644
 --- a/adb/adb_utils.cpp
 +++ b/adb/adb_utils.cpp
-@@ -259,7 +259,7 @@ std::string adb_get_homedir_path(bool check_env_first) {
+@@ -259,7 +259,11 @@ std::string adb_get_homedir_path(bool check_env_first) {
      }
      return home_str;
  #else
--    if (const char* const home = getenv("HOME")) {
++#if defined(ADB_HOST)
 +    if (const char* const home = getenv("ANDROID_DATA")) {
++#else
+     if (const char* const home = getenv("HOME")) {
++#endif
          return home;
      }
      return {};
 diff --git a/adb/client/main.cpp b/adb/client/main.cpp
-index ba4737f8d..76fe8b34f 100644
+index ba4737f8d..e2aa289a6 100644
 --- a/adb/client/main.cpp
 +++ b/adb/client/main.cpp
-@@ -56,7 +56,7 @@ static std::string GetLogFilePath() {
+@@ -56,7 +56,11 @@ static std::string GetLogFilePath() {
      return temp_path_utf8 + log_name;
  #else
      const char* tmp_dir = getenv("TMPDIR");
--    if (tmp_dir == nullptr) tmp_dir = "/tmp";
++#if defined(ADB_HOST)
 +    if (tmp_dir == nullptr) tmp_dir = "/data/local/tmp";
++#else
+     if (tmp_dir == nullptr) tmp_dir = "/tmp";
++#endif
      return android::base::StringPrintf("%s/adb.%u.log", tmp_dir, getuid());
  #endif
  }
 diff --git a/adb/diagnose_usb.cpp b/adb/diagnose_usb.cpp
-index 0f067b0ec..1138f8df0 100644
+index 0f067b0ec..958b46994 100644
 --- a/adb/diagnose_usb.cpp
 +++ b/adb/diagnose_usb.cpp
-@@ -32,28 +32,7 @@ static const char kPermissionsHelpUrl[] = "http://developer.android.com/tools/de
+@@ -32,7 +32,7 @@ static const char kPermissionsHelpUrl[] = "http://developer.android.com/tools/de
  // Returns a message describing any potential problems we find with udev, or nullptr if we can't
  // find plugdev information (i.e. udev is not installed).
  static const char* GetUdevProblem() {
 -#if defined(__linux__)
--    errno = 0;
--    group* plugdev_group = getgrnam("plugdev");
--
--    if (plugdev_group == nullptr) {
--        if (errno != 0) {
--            perror("failed to read plugdev group info");
--        }
--        // We can't give any generally useful advice here, just let the caller print the help URL.
--        return nullptr;
--    }
--
--    // getgroups(2) indicates that the group_member() may not check the egid so we check it
--    // additionally just to be sure.
--    if (group_member(plugdev_group->gr_gid) || getegid() == plugdev_group->gr_gid) {
--        // The user is in plugdev so the problem is likely with the udev rules.
--        return "verify udev rules";
--    }
--    return "udev requires plugdev group membership";
--#else
-     return nullptr;
--#endif
- }
++#if defined(__linux__) && !defined(ADB_HOST)
+     errno = 0;
+     group* plugdev_group = getgrnam("plugdev");
  
- // Short help text must be a single line, and will look something like:
 diff --git a/adb/sockets.cpp b/adb/sockets.cpp
 index 63b7df6f2..8ce18a653 100644
 --- a/adb/sockets.cpp
@@ -80,31 +66,43 @@ index 63b7df6f2..8ce18a653 100644
          // No colon in service string.
          return nullptr;
 diff --git a/base/logging.cpp b/base/logging.cpp
-index 174187149..c82ca3e37 100644
+index 174187149..5ee3c2698 100644
 --- a/base/logging.cpp
 +++ b/base/logging.cpp
-@@ -46,7 +46,7 @@
+@@ -46,7 +46,11 @@
  
  // Headers for LogMessage::LogLine.
  #ifdef __ANDROID__
--#include <android/set_abort_message.h>
++#if defined(ANDROID_HOST_BUILD)
 +extern "C" void android_set_abort_message(const char *msg);
++#else
+ #include <android/set_abort_message.h>
++#endif
  #include "cutils/log.h"
  #else
  #include <sys/types.h>
-@@ -224,10 +224,10 @@ void LogdLogger::operator()(LogId id, LogSeverity severity, const char* tag,
+@@ -223,12 +227,21 @@ void LogdLogger::operator()(LogId id, LogSeverity severity, const char* tag,
+ 
    log_id lg_id = kLogIdToAndroidLogId[id];
  
-   if (priority == ANDROID_LOG_FATAL) {
--    __android_log_buf_print(lg_id, priority, tag, "%s:%u] %s", file, line,
++#if defined (ANDROID_HOST_BUILD)
++  if (priority == ANDROID_LOG_FATAL) {
 +    __android_log_print(priority, tag, "%s:%u] %s", file, line,
++                            message);
++  } else {
++    __android_log_print(priority, tag, "%s", message);
++  }
++#else
+   if (priority == ANDROID_LOG_FATAL) {
+     __android_log_buf_print(lg_id, priority, tag, "%s:%u] %s", file, line,
                              message);
    } else {
--    __android_log_buf_print(lg_id, priority, tag, "%s", message);
-+    __android_log_print(priority, tag, "%s", message);
+     __android_log_buf_print(lg_id, priority, tag, "%s", message);
    }
++#endif
  }
  #endif
+ 
 diff --git a/fastboot/protocol.cpp b/fastboot/protocol.cpp
 index 4850b4a0d..6bfdce625 100644
 --- a/fastboot/protocol.cpp
@@ -118,19 +116,42 @@ index 4850b4a0d..6bfdce625 100644
  
  #include <stdio.h>
  #include <stdlib.h>
+diff --git a/liblog/logger_write.c b/liblog/logger_write.c
+index c7b5a8415..e2c56f120 100644
+--- a/liblog/logger_write.c
++++ b/liblog/logger_write.c
+@@ -21,8 +21,12 @@
+ #include <sys/time.h>
+ 
+ #ifdef __BIONIC__
++#if defined(FAKE_LOG_DEVICE)
++extern void android_set_abort_message(const char *msg);
++#else
+ #include <android/set_abort_message.h>
+ #endif
++#endif
+ 
+ #include <log/event_tag_map.h>
+ #include <log/logd.h>
+@@ -235,7 +239,7 @@ static int __write_to_log_daemon(log_id_t log_id, struct iovec *vec, size_t nr)
+         return -EINVAL;
+     }
+ 
+-#if defined(__BIONIC__)
++#if defined(__BIONIC__) && !defined(FAKE_LOG_DEVICE)
+     if (log_id == LOG_ID_SECURITY) {
+         if (vec[0].iov_len < 4) {
+             return -EINVAL;
 diff --git a/libziparchive/zip_archive.cc b/libziparchive/zip_archive.cc
-index 986ee7208..0b595cdb1 100644
+index 986ee7208..aa579fc54 100644
 --- a/libziparchive/zip_archive.cc
 +++ b/libziparchive/zip_archive.cc
-@@ -272,11 +272,6 @@ static int32_t MapCentralDirectory0(int fd, const char* debug_file_name,
+@@ -272,7 +272,7 @@ static int32_t MapCentralDirectory0(int fd, const char* debug_file_name,
    if (static_cast<off64_t>(eocd->cd_start_offset) + eocd->cd_size > eocd_offset) {
      ALOGW("Zip: bad offsets (dir %" PRIu32 ", size %" PRIu32 ", eocd %" PRId64 ")",
          eocd->cd_start_offset, eocd->cd_size, static_cast<int64_t>(eocd_offset));
 -#if defined(__ANDROID__)
--    if (eocd->cd_start_offset + eocd->cd_size <= eocd_offset) {
--      android_errorWriteLog(0x534e4554, "31251826");
--    }
--#endif
-     return kInvalidOffset;
-   }
-   if (eocd->num_records == 0) {
++#if defined(__ANDROID__) && !defined(ANDROID_HOST_BUILD)
+     if (eocd->cd_start_offset + eocd->cd_size <= eocd_offset) {
+       android_errorWriteLog(0x534e4554, "31251826");
+     }

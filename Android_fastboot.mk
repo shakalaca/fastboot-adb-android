@@ -5,6 +5,7 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := fastboot
 
 LOCAL_CFLAGS := \
+    -DANDROID_HOST_BUILD -DADB_HOST \
     -Wall -Wextra -Werror -Wunreachable-code \
     -DFASTBOOT_REVISION='"shakalaca-$(shell date +%Y-%m-%d)"' \
     -DUSE_F2FS
