@@ -66,7 +66,7 @@ index 63b7df6f2..8ce18a653 100644
          // No colon in service string.
          return nullptr;
 diff --git a/base/logging.cpp b/base/logging.cpp
-index 174187149..5ee3c2698 100644
+index 174187149..98b1f3b7e 100644
 --- a/base/logging.cpp
 +++ b/base/logging.cpp
 @@ -46,7 +46,11 @@
@@ -81,27 +81,23 @@ index 174187149..5ee3c2698 100644
  #include "cutils/log.h"
  #else
  #include <sys/types.h>
-@@ -223,12 +227,21 @@ void LogdLogger::operator()(LogId id, LogSeverity severity, const char* tag,
+@@ -162,7 +166,7 @@ namespace base {
  
-   log_id lg_id = kLogIdToAndroidLogId[id];
+ static auto& logging_lock = *new mutex();
  
-+#if defined (ANDROID_HOST_BUILD)
-+  if (priority == ANDROID_LOG_FATAL) {
-+    __android_log_print(priority, tag, "%s:%u] %s", file, line,
-+                            message);
-+  } else {
-+    __android_log_print(priority, tag, "%s", message);
-+  }
-+#else
-   if (priority == ANDROID_LOG_FATAL) {
-     __android_log_buf_print(lg_id, priority, tag, "%s:%u] %s", file, line,
-                             message);
-   } else {
-     __android_log_buf_print(lg_id, priority, tag, "%s", message);
-   }
-+#endif
+-#ifdef __ANDROID__
++#if defined(__ANDROID__) && !defined(ANDROID_HOST_BUILD)
+ static auto& gLogger = *new LogFunction(LogdLogger());
+ #else
+ static auto& gLogger = *new LogFunction(StderrLogger);
+@@ -195,7 +199,7 @@ void StderrLogger(LogId, LogSeverity severity, const char*, const char* file,
  }
- #endif
+ 
+ 
+-#ifdef __ANDROID__
++#if defined(__ANDROID__) && !defined(ANDROID_HOST_BUILD)
+ LogdLogger::LogdLogger(LogId default_log_id) : default_log_id_(default_log_id) {
+ }
  
 diff --git a/fastboot/protocol.cpp b/fastboot/protocol.cpp
 index 4850b4a0d..6bfdce625 100644
@@ -116,6 +112,23 @@ index 4850b4a0d..6bfdce625 100644
  
  #include <stdio.h>
  #include <stdlib.h>
+diff --git a/liblog/logger_write.c b/liblog/logger_write.c
+index c7b5a8415..b34142b01 100644
+--- a/liblog/logger_write.c
++++ b/liblog/logger_write.c
+@@ -21,8 +21,12 @@
+ #include <sys/time.h>
+ 
+ #ifdef __BIONIC__
++#if defined(FAKE_LOG_DEVICE)
++extern void android_set_abort_message(const char *msg);
++#else
+ #include <android/set_abort_message.h>
+ #endif
++#endif
+ 
+ #include <log/event_tag_map.h>
+ #include <log/logd.h>
 diff --git a/libziparchive/zip_archive.cc b/libziparchive/zip_archive.cc
 index 986ee7208..aa579fc54 100644
 --- a/libziparchive/zip_archive.cc

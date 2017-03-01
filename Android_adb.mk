@@ -50,8 +50,7 @@ LOCAL_SRC_FILES := \
 LOCAL_SRC_FILES += \
     src/system/core/libutils/FileMap.cpp
 
-LOCAL_LDLIBS += -llog
-LOCAL_STATIC_LIBRARIES := crypto decrepit base cutils
+LOCAL_STATIC_LIBRARIES := crypto decrepit base cutils log_fake
 
 include $(BUILD_EXECUTABLE)
 

@@ -42,8 +42,8 @@ LOCAL_SRC_FILES += \
 LOCAL_SRC_FILES += \
     src/system/core/adb/diagnose_usb.cpp
 
-LOCAL_LDLIBS += -lz -llog
-LOCAL_STATIC_LIBRARIES := selinux ext4_utils f2fs_utils sparse base cutils
+LOCAL_LDLIBS += -lz
+LOCAL_STATIC_LIBRARIES := selinux ext4_utils f2fs_utils sparse base cutils log_fake
 
 include $(BUILD_EXECUTABLE)
 
