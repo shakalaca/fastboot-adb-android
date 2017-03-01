@@ -153,37 +153,6 @@ LOCAL_STATIC_LIBRARIES := selinux
 include $(BUILD_STATIC_LIBRARY)
 
 ##############################################################################
-# liblog
-##############################################################################
-include $(CLEAR_VARS)
-
-LOCAL_MODULE := liblog
-
-LOCAL_CFLAGS := \
-    -Wno-unknown-attributes \
-    -DSNET_EVENT_LOG_TAG=1397638484 -DLIBLOG_LOG_TAG=1006
-
-LOCAL_EXPORT_C_INCLUDES := \
-    src/system/core/liblog
-
-LOCAL_C_INCLUDES := \
-    src/bionic/libc/include \
-    src/system/core/include
-
-LOCAL_SRC_FILES += \
-    src/system/core/liblog/logger_write.c \
-    src/system/core/liblog/config_write.c \
-    src/system/core/liblog/logger_lock.c \
-    src/system/core/liblog/log_event_write.c \
-    src/system/core/liblog/pmsg_writer.c \
-    src/system/core/liblog/logd_writer.c \
-    src/system/core/liblog/log_event_list.c \
-    src/system/core/liblog/log_is_loggable.c \
-    src/system/core/liblog/event_tag_map.c
-
-include $(BUILD_STATIC_LIBRARY)
-
-##############################################################################
 # libbase
 ##############################################################################
 include $(CLEAR_VARS)

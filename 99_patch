@@ -116,32 +116,6 @@ index 4850b4a0d..6bfdce625 100644
  
  #include <stdio.h>
  #include <stdlib.h>
-diff --git a/liblog/logger_write.c b/liblog/logger_write.c
-index c7b5a8415..e2c56f120 100644
---- a/liblog/logger_write.c
-+++ b/liblog/logger_write.c
-@@ -21,8 +21,12 @@
- #include <sys/time.h>
- 
- #ifdef __BIONIC__
-+#if defined(FAKE_LOG_DEVICE)
-+extern void android_set_abort_message(const char *msg);
-+#else
- #include <android/set_abort_message.h>
- #endif
-+#endif
- 
- #include <log/event_tag_map.h>
- #include <log/logd.h>
-@@ -235,7 +239,7 @@ static int __write_to_log_daemon(log_id_t log_id, struct iovec *vec, size_t nr)
-         return -EINVAL;
-     }
- 
--#if defined(__BIONIC__)
-+#if defined(__BIONIC__) && !defined(FAKE_LOG_DEVICE)
-     if (log_id == LOG_ID_SECURITY) {
-         if (vec[0].iov_len < 4) {
-             return -EINVAL;
 diff --git a/libziparchive/zip_archive.cc b/libziparchive/zip_archive.cc
 index 986ee7208..aa579fc54 100644
 --- a/libziparchive/zip_archive.cc
