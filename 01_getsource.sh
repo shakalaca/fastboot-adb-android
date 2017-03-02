@@ -16,6 +16,7 @@ clone external/gtest
 clone external/libselinux
 clone external/pcre
 clone external/f2fs-tools
+clone external/e2fsprogs
 
 git clone https://boringssl.googlesource.com/boringssl src/boringssl
 

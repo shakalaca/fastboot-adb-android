@@ -133,6 +133,95 @@ LOCAL_STATIC_LIBRARIES := selinux sparse
 
 include $(BUILD_STATIC_LIBRARY)
 
+ifeq ($(SUPPORT_F2FS),yes)
+##############################################################################
+# libext2_uuid
+##############################################################################
+include $(CLEAR_VARS)
+
+LOCAL_MODULE := libext2_uuid
+
+LOCAL_SRC_FILES := \
+    src/external/e2fsprogs/lib/uuid/clear.c \
+    src/external/e2fsprogs/lib/uuid/compare.c \
+    src/external/e2fsprogs/lib/uuid/copy.c \
+    src/external/e2fsprogs/lib/uuid/gen_uuid.c \
+    src/external/e2fsprogs/lib/uuid/isnull.c \
+    src/external/e2fsprogs/lib/uuid/pack.c \
+    src/external/e2fsprogs/lib/uuid/parse.c \
+    src/external/e2fsprogs/lib/uuid/unpack.c \
+    src/external/e2fsprogs/lib/uuid/unparse.c \
+    src/external/e2fsprogs/lib/uuid/uuid_time.c
+
+LOCAL_C_INCLUDES := \
+    src/external/e2fsprogs/lib
+
+LOCAL_EXPORT_C_INCLUDES := \
+    src/external/e2fsprogs/lib \
+    src/external/e2fsprogs
+
+LOCAL_CFLAGS := -O2 -g -W -Wall \
+    -Wno-unused-parameter \
+    -Wno-unused-function \
+	-DHAVE_INTTYPES_H \
+	-DHAVE_UNISTD_H \
+	-DHAVE_ERRNO_H \
+	-DHAVE_NETINET_IN_H \
+	-DHAVE_SYS_IOCTL_H \
+	-DHAVE_SYS_MMAN_H \
+	-DHAVE_SYS_MOUNT_H \
+	-DHAVE_SYS_PRCTL_H \
+	-DHAVE_SYS_RESOURCE_H \
+	-DHAVE_SYS_SELECT_H \
+	-DHAVE_SYS_STAT_H \
+	-DHAVE_SYS_TYPES_H \
+	-DHAVE_STDLIB_H \
+	-DHAVE_STRDUP \
+	-DHAVE_MMAP \
+	-DHAVE_UTIME_H \
+	-DHAVE_GETPAGESIZE \
+	-DHAVE_LSEEK64 \
+	-DHAVE_LSEEK64_PROTOTYPE \
+	-DHAVE_EXT2_IOCTLS \
+	-DHAVE_LINUX_FD_H \
+	-DHAVE_TYPE_SSIZE_T \
+	-DHAVE_SYS_TIME_H \
+        -DHAVE_SYS_PARAM_H \
+	-DHAVE_SYSCONF
+
+include $(BUILD_STATIC_LIBRARY)
+
+##############################################################################
+# libf2fs_fmt_host_dyn
+##############################################################################
+include $(CLEAR_VARS)
+
+LOCAL_MODULE := libf2fs_fmt_host_dyn
+
+LOCAL_CFLAGS := \
+    -DF2FS_MAJOR_VERSION=1 \
+    -DF2FS_MINOR_VERSION=4 \
+    -DF2FS_TOOLS_VERSION=\"1.4.0\" \
+    -DF2FS_TOOLS_DATE=\"2014-10-18\"
+
+LOCAL_C_INCLUDES := \
+    src/external/f2fs-tools/include \
+    src/external/f2fs-tools/mkfs
+
+LOCAL_EXPORT_C_INCLUDES := \
+    src/external/f2fs-tools/include \
+    src/external/f2fs-tools/mkfs
+
+LOCAL_SRC_FILES := \
+    src/external/f2fs-tools/lib/libf2fs.c \
+    src/external/f2fs-tools/mkfs/f2fs_format.c \
+    src/system/extras/f2fs_utils/f2fs_ioutils.c
+
+LOCAL_LDLIBS := -lz
+LOCAL_STATIC_LIBRARIES := ext2_uuid sparse selinux
+
+include $(BUILD_SHARED_LIBRARY)
+
 ##############################################################################
 # libf2fs_utils
 ##############################################################################
@@ -158,6 +247,7 @@ LOCAL_SRC_FILES += \
 LOCAL_STATIC_LIBRARIES := selinux sparse
 
 include $(BUILD_STATIC_LIBRARY)
+endif # SUPPORT_F2FS
 
 ##############################################################################
 # liblog

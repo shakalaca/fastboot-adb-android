@@ -9,13 +9,13 @@ LOCAL_MODULE := fastboot
 LOCAL_CFLAGS := \
     -DANDROID_HOST_BUILD -DADB_HOST \
     -Wall -Wextra -Werror -Wunreachable-code \
-    -DFASTBOOT_REVISION='"shakalaca-$(shell date +%Y-%m-%d)-$(fastboot_version)"' \
-    -DUSE_F2FS
+    -DFASTBOOT_REVISION='"shakalaca-$(shell date +%Y-%m-%d)-$(fastboot_version)"'
 
 LOCAL_C_INCLUDES := \
     src/system/core/include \
     src/system/core/adb \
     src/system/core/mkbootimg \
+    src/system/extras/f2fs_utils \
     src/external/gtest/include
 
 LOCAL_SRC_FILES := \
@@ -43,9 +43,14 @@ LOCAL_SRC_FILES += \
 LOCAL_SRC_FILES += \
     src/system/core/adb/diagnose_usb.cpp
 
-LOCAL_LDFLAGS := -ldl -rdynamic -Wl,-rpath,.
 LOCAL_LDLIBS += -lz
-LOCAL_STATIC_LIBRARIES := selinux ext4_utils f2fs_utils sparse base cutils log_fake
+LOCAL_STATIC_LIBRARIES := selinux ext4_utils sparse base cutils log_fake
+
+ifeq ($(SUPPORT_F2FS),yes)
+LOCAL_CFLAGS += -DUSE_F2FS
+LOCAL_LDFLAGS := -ldl -rdynamic
+LOCAL_STATIC_LIBRARIES += f2fs_utils f2fs_fmt_host_dyn
+endif
 
 include $(BUILD_EXECUTABLE)
 
