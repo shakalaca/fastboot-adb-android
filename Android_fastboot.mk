@@ -48,8 +48,7 @@ LOCAL_STATIC_LIBRARIES := selinux ext4_utils sparse base cutils log_fake
 
 ifeq ($(SUPPORT_F2FS),yes)
 LOCAL_CFLAGS += -DUSE_F2FS
-LOCAL_LDFLAGS := -ldl -rdynamic
-LOCAL_STATIC_LIBRARIES += f2fs_utils f2fs_fmt_host_dyn
+LOCAL_STATIC_LIBRARIES += f2fs_utils
 endif
 
 include $(BUILD_EXECUTABLE)

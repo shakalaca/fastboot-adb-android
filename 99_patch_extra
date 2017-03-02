@@ -1,0 +1,53 @@
+diff --git a/f2fs_utils/f2fs_ioutils.c b/f2fs_utils/f2fs_ioutils.c
+index 01efd53..e671ca5 100644
+--- a/f2fs_utils/f2fs_ioutils.c
++++ b/f2fs_utils/f2fs_ioutils.c
+@@ -152,6 +152,12 @@ int f2fs_trim_device()
+  */
+ int dev_read_version(void *buf, __u64 offset, size_t len)
+ {
++#ifdef ANDROID_HOST_BUILD
++	if (lseek64(config.kd, (off64_t)offset, SEEK_SET) < 0)
++		return -1;
++	if (read(config.kd, buf, len) < 0)
++		return -1;
++#endif /* ANDROID_HOST_BUILD */
+         return 0;
+ }
+ 
+diff --git a/f2fs_utils/f2fs_utils.c b/f2fs_utils/f2fs_utils.c
+index 6254c08..ac1364e 100644
+--- a/f2fs_utils/f2fs_utils.c
++++ b/f2fs_utils/f2fs_utils.c
+@@ -51,6 +51,9 @@ static void reset_f2fs_info() {
+ 	// can be called again.
+ 	memset(&config, 0, sizeof(config));
+ 	config.fd = -1;
++#ifdef ANDROID_HOST_BUILD
++	config.kd = open("/proc/version", O_RDONLY);
++#endif /* ANDROID_HOST_BUILD */
+ 	if (f2fs_sparse_file) {
+ 		sparse_file_destroy(f2fs_sparse_file);
+ 		f2fs_sparse_file = NULL;
+@@ -60,9 +63,11 @@ static void reset_f2fs_info() {
+ int make_f2fs_sparse_fd(int fd, long long len,
+ 		const char *mountpoint, struct selabel_handle *sehnd)
+ {
++#ifndef ANDROID_HOST_BUILD
+ 	if (dlopenf2fs() < 0) {
+ 		return -1;
+ 	}
++#endif /* !ANDROID_HOST_BUILD */
+ 	reset_f2fs_info();
+ 	f2fs_init_configuration(&config);
+ 	len &= ~((__u64)(F2FS_BLKSIZE - 1));
+@@ -73,6 +78,9 @@ int make_f2fs_sparse_fd(int fd, long long len,
+ 	sparse_file_write(f2fs_sparse_file, fd, /*gzip*/0, /*sparse*/1, /*crc*/0);
+ 	sparse_file_destroy(f2fs_sparse_file);
+ 	flush_sparse_buffs();
++#ifdef ANDROID_HOST_BUILD
++	close(config.kd);
++#endif /* ANDROID_HOST_BUILD */
+ 	f2fs_sparse_file = NULL;
+ 	return 0;
+ }

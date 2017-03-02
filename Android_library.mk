@@ -192,37 +192,6 @@ LOCAL_CFLAGS := -O2 -g -W -Wall \
 include $(BUILD_STATIC_LIBRARY)
 
 ##############################################################################
-# libf2fs_fmt_host_dyn
-##############################################################################
-include $(CLEAR_VARS)
-
-LOCAL_MODULE := libf2fs_fmt_host_dyn
-
-LOCAL_CFLAGS := \
-    -DF2FS_MAJOR_VERSION=1 \
-    -DF2FS_MINOR_VERSION=4 \
-    -DF2FS_TOOLS_VERSION=\"1.4.0\" \
-    -DF2FS_TOOLS_DATE=\"2014-10-18\"
-
-LOCAL_C_INCLUDES := \
-    src/external/f2fs-tools/include \
-    src/external/f2fs-tools/mkfs
-
-LOCAL_EXPORT_C_INCLUDES := \
-    src/external/f2fs-tools/include \
-    src/external/f2fs-tools/mkfs
-
-LOCAL_SRC_FILES := \
-    src/external/f2fs-tools/lib/libf2fs.c \
-    src/external/f2fs-tools/mkfs/f2fs_format.c \
-    src/system/extras/f2fs_utils/f2fs_ioutils.c
-
-LOCAL_LDLIBS := -lz
-LOCAL_STATIC_LIBRARIES := ext2_uuid sparse selinux
-
-include $(BUILD_SHARED_LIBRARY)
-
-##############################################################################
 # libf2fs_utils
 ##############################################################################
 include $(CLEAR_VARS)
@@ -230,10 +199,17 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := libf2fs_utils
 
 LOCAL_CFLAGS := \
+    -DANDROID_HOST_BUILD \
+    -DF2FS_MAJOR_VERSION=1 \
+    -DF2FS_MINOR_VERSION=4 \
+    -DF2FS_TOOLS_VERSION=\"1.4.0\" \
+    -DF2FS_TOOLS_DATE=\"2014-10-18\" \
     -Wno-unused-parameter
 
 LOCAL_EXPORT_C_INCLUDES := \
-    src/system/extras/f2fs_utils
+    src/system/extras/f2fs_utils \
+    src/external/f2fs-tools/include \
+    src/external/f2fs-tools/mkfs
 
 LOCAL_C_INCLUDES := \
     src/external/f2fs-tools/include \
@@ -242,9 +218,10 @@ LOCAL_C_INCLUDES := \
 LOCAL_SRC_FILES += \
     src/system/extras/f2fs_utils/f2fs_utils.c \
     src/system/extras/f2fs_utils/f2fs_ioutils.c \
-    src/system/extras/f2fs_utils/f2fs_dlutils.c
+    src/external/f2fs-tools/lib/libf2fs.c \
+    src/external/f2fs-tools/mkfs/f2fs_format.c \
 
-LOCAL_STATIC_LIBRARIES := selinux sparse
+LOCAL_STATIC_LIBRARIES := ext2_uuid selinux sparse
 
 include $(BUILD_STATIC_LIBRARY)
 endif # SUPPORT_F2FS

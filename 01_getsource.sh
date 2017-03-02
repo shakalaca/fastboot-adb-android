@@ -20,5 +20,9 @@ clone external/e2fsprogs
 
 git clone https://boringssl.googlesource.com/boringssl src/boringssl
 
-cd src
-patch -p0 < ../99_patch
+pushd src/system/core
+patch -p1 < ../../../99_patch_core
+popd
+pushd src/system/extras
+patch -p1 < ../../../99_patch_extra
+popd
