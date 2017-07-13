@@ -302,6 +302,8 @@ LOCAL_MODULE := libcutils
 LOCAL_CFLAGS := \
     -Werror -Wall -Wextra -std=gnu90
 
+LOCAL_CPPFLAGS := -std=c++14
+
 LOCAL_C_INCLUDES := \
     src/system/core/include
 
