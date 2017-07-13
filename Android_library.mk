@@ -300,12 +300,13 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := libcutils
 
 LOCAL_CFLAGS := \
-    -Werror -Wall -Wextra -std=gnu90
+    -Werror -Wall -Wextra -std=gnu90 -Wno-typedef-redefinition
 
 LOCAL_CPPFLAGS := -std=c++14
 
 LOCAL_C_INCLUDES := \
-    src/system/core/include
+    src/system/core/include \
+    $(NDK_ROOT)/platforms/$(TARGET_PLATFORM)/arch-$(TARGET_ARCH)/usr/include
 
 LOCAL_SRC_FILES += \
     src/system/core/libcutils/atomic.c.arm \
