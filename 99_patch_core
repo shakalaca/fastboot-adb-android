@@ -1,13 +1,14 @@
 diff --git a/adb/adb_utils.cpp b/adb/adb_utils.cpp
-index 0645122b7..9548588b4 100644
+index 0645122b7..b8354871b 100644
 --- a/adb/adb_utils.cpp
 +++ b/adb/adb_utils.cpp
-@@ -259,7 +259,11 @@ std::string adb_get_homedir_path(bool check_env_first) {
+@@ -259,7 +259,12 @@ std::string adb_get_homedir_path(bool check_env_first) {
      }
      return home_str;
  #else
 +#if defined(ADB_HOST)
-+    if (const char* const home = getenv("ANDROID_DATA")) {
++    if (const char* const home = getenv("HOMEDIR")) {
++        if (home == nullptr) return getenv("ANDROID_DATA");
 +#else
      if (const char* const home = getenv("HOME")) {
 +#endif
@@ -15,16 +16,18 @@ index 0645122b7..9548588b4 100644
      }
      return {};
 diff --git a/adb/client/main.cpp b/adb/client/main.cpp
-index ba4737f8d..e2aa289a6 100644
+index ba4737f8d..ee436b30b 100644
 --- a/adb/client/main.cpp
 +++ b/adb/client/main.cpp
-@@ -56,7 +56,11 @@ static std::string GetLogFilePath() {
+@@ -55,8 +55,13 @@ static std::string GetLogFilePath() {
+ 
      return temp_path_utf8 + log_name;
  #else
-     const char* tmp_dir = getenv("TMPDIR");
 +#if defined(ADB_HOST)
++    const char* tmp_dir = getenv("HOMEDIR");
 +    if (tmp_dir == nullptr) tmp_dir = "/data/local/tmp";
 +#else
+     const char* tmp_dir = getenv("TMPDIR");
      if (tmp_dir == nullptr) tmp_dir = "/tmp";
 +#endif
      return android::base::StringPrintf("%s/adb.%u.log", tmp_dir, getuid());
@@ -112,8 +115,21 @@ index 4850b4a0d..6bfdce625 100644
  
  #include <stdio.h>
  #include <stdlib.h>
+diff --git a/liblog/fake_log_device.c b/liblog/fake_log_device.c
+index cc67f3eba..dbcb0cb83 100644
+--- a/liblog/fake_log_device.c
++++ b/liblog/fake_log_device.c
+@@ -670,7 +670,7 @@ static void setRedirects()
+         /* We're running inside wrapsim, so we can just write to the device. */
+         redirectOpen = (int (*)(const char *pathName, int flags))open;
+         redirectClose = close;
+-        redirectWritev = writev;
++        redirectWritev = (ssize_t(*)(int, const struct iovec *, int))writev;
+     } else {
+         /* There's no device to delegate to; handle the logging ourselves. */
+         redirectOpen = logOpen;
 diff --git a/liblog/logger_write.c b/liblog/logger_write.c
-index c7b5a8415..b34142b01 100644
+index c7b5a8415..e2c56f120 100644
 --- a/liblog/logger_write.c
 +++ b/liblog/logger_write.c
 @@ -21,8 +21,12 @@
@@ -129,6 +145,15 @@ index c7b5a8415..b34142b01 100644
  
  #include <log/event_tag_map.h>
  #include <log/logd.h>
+@@ -235,7 +239,7 @@ static int __write_to_log_daemon(log_id_t log_id, struct iovec *vec, size_t nr)
+         return -EINVAL;
+     }
+ 
+-#if defined(__BIONIC__)
++#if defined(__BIONIC__) && !defined(FAKE_LOG_DEVICE)
+     if (log_id == LOG_ID_SECURITY) {
+         if (vec[0].iov_len < 4) {
+             return -EINVAL;
 diff --git a/libziparchive/zip_archive.cc b/libziparchive/zip_archive.cc
 index 986ee7208..aa579fc54 100644
 --- a/libziparchive/zip_archive.cc

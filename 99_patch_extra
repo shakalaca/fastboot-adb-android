@@ -16,7 +16,7 @@ index 01efd53..e671ca5 100644
  }
  
 diff --git a/f2fs_utils/f2fs_utils.c b/f2fs_utils/f2fs_utils.c
-index 6254c08..ac1364e 100644
+index 6254c08..e2fc94c 100644
 --- a/f2fs_utils/f2fs_utils.c
 +++ b/f2fs_utils/f2fs_utils.c
 @@ -51,6 +51,9 @@ static void reset_f2fs_info() {
@@ -41,12 +41,14 @@ index 6254c08..ac1364e 100644
  	reset_f2fs_info();
  	f2fs_init_configuration(&config);
  	len &= ~((__u64)(F2FS_BLKSIZE - 1));
-@@ -73,6 +78,9 @@ int make_f2fs_sparse_fd(int fd, long long len,
+@@ -73,6 +78,11 @@ int make_f2fs_sparse_fd(int fd, long long len,
  	sparse_file_write(f2fs_sparse_file, fd, /*gzip*/0, /*sparse*/1, /*crc*/0);
  	sparse_file_destroy(f2fs_sparse_file);
  	flush_sparse_buffs();
 +#ifdef ANDROID_HOST_BUILD
-+	close(config.kd);
++	if (config.kd != -1) {
++		close(config.kd);
++	}
 +#endif /* ANDROID_HOST_BUILD */
  	f2fs_sparse_file = NULL;
  	return 0;
