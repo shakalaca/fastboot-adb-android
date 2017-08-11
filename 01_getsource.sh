@@ -2,7 +2,7 @@
 
 clone() {
   repo=$1
-  git clone -b android-7.1.2_r27 https://android.googlesource.com/platform/$repo src/$repo
+  git clone -b android-7.1.2_r33 https://android.googlesource.com/platform/$repo src/$repo
 }
 
 mkdir src
