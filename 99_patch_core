@@ -1,25 +1,24 @@
 diff --git a/adb/adb_utils.cpp b/adb/adb_utils.cpp
-index 0645122b7..b8354871b 100644
+index b236fb3..6f86583 100644
 --- a/adb/adb_utils.cpp
 +++ b/adb/adb_utils.cpp
-@@ -259,7 +259,12 @@ std::string adb_get_homedir_path(bool check_env_first) {
+@@ -242,6 +242,15 @@ std::string adb_get_homedir_path() {
      }
      return home_str;
  #else
 +#if defined(ADB_HOST)
 +    if (const char* const home = getenv("HOMEDIR")) {
-+        if (home == nullptr) return getenv("ANDROID_DATA");
-+#else
++        return home;
++    }
++    
++    if (const char* const data = getenv("ANDROID_DATA")) {
++        return data;
++    }
++#endif /* ADB_HOST */
      if (const char* const home = getenv("HOME")) {
-+#endif
          return home;
      }
-     return {};
-diff --git a/adb/client/main.cpp b/adb/client/main.cpp
-index ba4737f8d..ee436b30b 100644
---- a/adb/client/main.cpp
-+++ b/adb/client/main.cpp
-@@ -55,8 +55,13 @@ static std::string GetLogFilePath() {
+@@ -308,8 +317,13 @@ std::string GetLogFilePath() {
  
      return temp_path_utf8 + log_name;
  #else
@@ -33,24 +32,36 @@ index ba4737f8d..ee436b30b 100644
      return android::base::StringPrintf("%s/adb.%u.log", tmp_dir, getuid());
  #endif
  }
+diff --git a/adb/client/usb_linux.cpp b/adb/client/usb_linux.cpp
+index a7df0ed..1d8bd50 100644
+--- a/adb/client/usb_linux.cpp
++++ b/adb/client/usb_linux.cpp
+@@ -18,6 +18,7 @@
+ 
+ #include "sysdeps.h"
+ 
++#include <sys/sysmacros.h>
+ #include <ctype.h>
+ #include <dirent.h>
+ #include <errno.h>
 diff --git a/adb/diagnose_usb.cpp b/adb/diagnose_usb.cpp
-index 0f067b0ec..958b46994 100644
+index 9f721bf..90b9f29 100644
 --- a/adb/diagnose_usb.cpp
 +++ b/adb/diagnose_usb.cpp
-@@ -32,7 +32,7 @@ static const char kPermissionsHelpUrl[] = "http://developer.android.com/tools/de
- // Returns a message describing any potential problems we find with udev, or nullptr if we can't
- // find plugdev information (i.e. udev is not installed).
- static const char* GetUdevProblem() {
+@@ -33,7 +33,7 @@ static const char kPermissionsHelpUrl[] = "http://developer.android.com/tools/de
+ // Returns a message describing any potential problems we find with udev, or an empty string if we
+ // can't find plugdev information (i.e. udev is not installed).
+ static std::string GetUdevProblem() {
 -#if defined(__linux__)
 +#if defined(__linux__) && !defined(ADB_HOST)
      errno = 0;
      group* plugdev_group = getgrnam("plugdev");
  
 diff --git a/adb/sockets.cpp b/adb/sockets.cpp
-index 63b7df6f2..8ce18a653 100644
+index c53fbb4..807b7aa 100644
 --- a/adb/sockets.cpp
 +++ b/adb/sockets.cpp
-@@ -614,7 +614,7 @@ char* skip_host_serial(const char* service) {
+@@ -610,7 +610,7 @@ char* skip_host_serial(char* service) {
  
      for (const std::string& prefix : prefixes) {
          if (!strncmp(service, prefix.c_str(), prefix.length())) {
@@ -59,41 +70,32 @@ index 63b7df6f2..8ce18a653 100644
          }
      }
  
-@@ -623,7 +623,7 @@ char* skip_host_serial(const char* service) {
-         service += 4;
-     }
- 
--    char* first_colon = strchr(service, ':');
-+    char* first_colon = strchr((char *)service, ':');
-     if (!first_colon) {
-         // No colon in service string.
-         return nullptr;
 diff --git a/base/logging.cpp b/base/logging.cpp
-index 174187149..98b1f3b7e 100644
+index 6357b4b..5c859a2 100644
 --- a/base/logging.cpp
 +++ b/base/logging.cpp
 @@ -46,7 +46,11 @@
- 
  // Headers for LogMessage::LogLine.
  #ifdef __ANDROID__
+ #include <log/log.h>
 +#if defined(ANDROID_HOST_BUILD)
 +extern "C" void android_set_abort_message(const char *msg);
 +#else
  #include <android/set_abort_message.h>
 +#endif
- #include "cutils/log.h"
  #else
  #include <sys/types.h>
-@@ -162,7 +166,7 @@ namespace base {
+ #include <unistd.h>
+@@ -124,7 +128,7 @@ static std::mutex& LoggingLock() {
+ }
  
- static auto& logging_lock = *new mutex();
- 
+ static LogFunction& Logger() {
 -#ifdef __ANDROID__
 +#if defined(__ANDROID__) && !defined(ANDROID_HOST_BUILD)
- static auto& gLogger = *new LogFunction(LogdLogger());
+   static auto& logger = *new LogFunction(LogdLogger());
  #else
- static auto& gLogger = *new LogFunction(StderrLogger);
-@@ -195,7 +199,7 @@ void StderrLogger(LogId, LogSeverity severity, const char*, const char* file,
+   static auto& logger = *new LogFunction(StderrLogger);
+@@ -217,7 +221,7 @@ void DefaultAborter(const char* abort_message) {
  }
  
  
@@ -103,7 +105,7 @@ index 174187149..98b1f3b7e 100644
  }
  
 diff --git a/fastboot/protocol.cpp b/fastboot/protocol.cpp
-index 4850b4a0d..6bfdce625 100644
+index dcdf8f0..37aab61 100644
 --- a/fastboot/protocol.cpp
 +++ b/fastboot/protocol.cpp
 @@ -27,7 +27,7 @@
@@ -113,23 +115,140 @@ index 4850b4a0d..6bfdce625 100644
 -    ({ typeof(a) _a = (a); typeof(b) _b = (b); _a - (_a % _b); })
 +    ({ __typeof__(a) _a = (a); __typeof__(b) _b = (b); _a - (_a % _b); })
  
+ #include <fcntl.h>
  #include <stdio.h>
- #include <stdlib.h>
-diff --git a/liblog/fake_log_device.c b/liblog/fake_log_device.c
-index cc67f3eba..dbcb0cb83 100644
---- a/liblog/fake_log_device.c
-+++ b/liblog/fake_log_device.c
-@@ -670,7 +670,7 @@ static void setRedirects()
-         /* We're running inside wrapsim, so we can just write to the device. */
-         redirectOpen = (int (*)(const char *pathName, int flags))open;
-         redirectClose = close;
--        redirectWritev = writev;
-+        redirectWritev = (ssize_t(*)(int, const struct iovec *, int))writev;
-     } else {
-         /* There's no device to delegate to; handle the logging ourselves. */
-         redirectOpen = logOpen;
+diff --git a/fastboot/socket.h b/fastboot/socket.h
+index 7eaa0ab..080f549 100644
+--- a/fastboot/socket.h
++++ b/fastboot/socket.h
+@@ -41,7 +41,6 @@
+ 
+ #include <android-base/macros.h>
+ #include <cutils/sockets.h>
+-#include <gtest/gtest_prod.h>
+ 
+ // Socket interface to be implemented for each platform.
+ class Socket {
+@@ -120,9 +119,6 @@ class Socket {
+             socket_send_buffers_function_ = &socket_send_buffers;
+ 
+   private:
+-    FRIEND_TEST(SocketTest, TestTcpSendBuffers);
+-    FRIEND_TEST(SocketTest, TestUdpSendBuffers);
+-
+     DISALLOW_COPY_AND_ASSIGN(Socket);
+ };
+ 
+diff --git a/libcutils/canned_fs_config.c b/libcutils/canned_fs_config.c
+index 819a846..993e2be 100644
+--- a/libcutils/canned_fs_config.c
++++ b/libcutils/canned_fs_config.c
+@@ -114,7 +114,11 @@ void canned_fs_config(const char* path, int dir, const char* target_out_path,
+         unsigned c_uid, c_gid, c_mode;
+         uint64_t c_capabilities;
+ 
++#if defined(ANDROID_HOST_BUILD)
++        printf("%d %s\n", dir, target_out_path);
++#else
+         fs_config(path, dir, target_out_path, &c_uid, &c_gid, &c_mode, &c_capabilities);
++#endif /* ANDROID_HOST_BUILD */
+ 
+         if (c_uid != *uid) printf("%s uid %d %d\n", path, *uid, c_uid);
+         if (c_gid != *gid) printf("%s gid %d %d\n", path, *gid, c_gid);
+diff --git a/libcutils/properties.cpp b/libcutils/properties.cpp
+index d2645e6..b94949d 100644
+--- a/libcutils/properties.cpp
++++ b/libcutils/properties.cpp
+@@ -129,6 +129,7 @@ struct callback_data {
+     void* cookie;
+ };
+ 
++#if __ANDROID_API__ >= 26
+ static void trampoline(void* raw_data, const char* name, const char* value, unsigned /*serial*/) {
+     callback_data* data = reinterpret_cast<callback_data*>(raw_data);
+     data->callback(name, value, data->cookie);
+@@ -137,6 +138,16 @@ static void trampoline(void* raw_data, const char* name, const char* value, unsi
+ static void property_list_callback(const prop_info* pi, void* data) {
+     __system_property_read_callback(pi, trampoline, data);
+ }
++#else
++static void property_list_callback(const prop_info* pi, void* data) {
++    char name[PROP_NAME_MAX];
++    char value[PROP_VALUE_MAX];
++    callback_data *cb_data = reinterpret_cast<callback_data*>(data);
++
++    __system_property_read(pi, name, value);
++    cb_data->callback(name, value, cb_data->cookie);
++}
++#endif
+ 
+ int property_list(void (*fn)(const char* name, const char* value, void* cookie), void* cookie) {
+     callback_data data = { fn, cookie };
+diff --git a/liblog/event_tag_map.cpp b/liblog/event_tag_map.cpp
+index 83064fd..79340cb 100644
+--- a/liblog/event_tag_map.cpp
++++ b/liblog/event_tag_map.cpp
+@@ -578,6 +578,11 @@ LIBLOG_ABI_PUBLIC const char* android_lookupEventTag(const EventTagMap* map,
+   return tagStr;
+ }
+ 
++#if defined(ANDROID_HOST_BUILD)
++int __android_log_is_loggable_len(int prio, const char* tag, size_t len,
++                                  int default_prio);
++#endif /* ANDROID_HOST_BUILD */
++
+ // Look up tagname, generate one if necessary, and return a tag
+ LIBLOG_ABI_PUBLIC int android_lookupEventTagNum(EventTagMap* map,
+                                                 const char* tagname,
+diff --git a/liblog/include/log/log_event_list.h b/liblog/include/log/log_event_list.h
+index bb1ce34..dfd4599 100644
+--- a/liblog/include/log/log_event_list.h
++++ b/liblog/include/log/log_event_list.h
+@@ -42,6 +42,11 @@ extern "C" {
+ #endif
+ #endif
+ 
++#ifdef ANDROID_HOST_BUILD
++#undef __ANDROID_USE_LIBLOG_EVENT_INTERFACE
++#define __ANDROID_USE_LIBLOG_EVENT_INTERFACE 1
++#endif /* ANDROID_HOST_BUILD */
++
+ #if __ANDROID_USE_LIBLOG_EVENT_INTERFACE
+ 
+ /* For manipulating lists of events. */
+diff --git a/liblog/include/log/log_properties.h b/liblog/include/log/log_properties.h
+index 7d398a6..0554834 100644
+--- a/liblog/include/log/log_properties.h
++++ b/liblog/include/log/log_properties.h
+@@ -24,6 +24,11 @@ extern "C" {
+ #endif
+ #endif
+ 
++#ifdef ANDROID_HOST_BUILD
++#undef __ANDROID_USE_LIBLOG_IS_DEBUGGABLE_INTERFACE
++#define __ANDROID_USE_LIBLOG_IS_DEBUGGABLE_INTERFACE 1
++#endif /* ANDROID_HOST_BUILD */
++
+ #if __ANDROID_USE_LIBLOG_IS_DEBUGGABLE_INTERFACE
+ int __android_log_is_debuggable();
+ #endif
+diff --git a/liblog/include/log/log_read.h b/liblog/include/log/log_read.h
+index d118563..c3f5d2e 100644
+--- a/liblog/include/log/log_read.h
++++ b/liblog/include/log/log_read.h
+@@ -251,6 +251,10 @@ int android_logger_set_prune_list(struct logger_list* logger_list, char* buf,
+ #define ANDROID_LOG_PSTORE 0x80000000
+ #endif
+ 
++#ifdef ANDROID_HOST_BUILD
++#define ANDROID_LOG_PSTORE 0x80000000
++#endif /* ANDROID_HOST_BUILD */
++
+ struct logger_list* android_logger_list_alloc(int mode, unsigned int tail,
+                                               pid_t pid);
+ struct logger_list* android_logger_list_alloc_time(int mode, log_time start,
 diff --git a/liblog/logger_write.c b/liblog/logger_write.c
-index c7b5a8415..e2c56f120 100644
+index 84feb20..a6e8349 100644
 --- a/liblog/logger_write.c
 +++ b/liblog/logger_write.c
 @@ -21,8 +21,12 @@
@@ -144,26 +263,66 @@ index c7b5a8415..e2c56f120 100644
 +#endif
  
  #include <log/event_tag_map.h>
- #include <log/logd.h>
-@@ -235,7 +239,7 @@ static int __write_to_log_daemon(log_id_t log_id, struct iovec *vec, size_t nr)
-         return -EINVAL;
-     }
+ #include <log/log_transport.h>
+@@ -254,7 +258,7 @@ static int __write_to_log_daemon(log_id_t log_id, struct iovec* vec, size_t nr)
+     return -EINVAL;
+   }
  
--#if defined(__BIONIC__)
-+#if defined(__BIONIC__) && !defined(FAKE_LOG_DEVICE)
-     if (log_id == LOG_ID_SECURITY) {
-         if (vec[0].iov_len < 4) {
-             return -EINVAL;
+-#if defined(__ANDROID__)
++#if defined(__ANDROID__) && !defined(ANDROID_HOST_BUILD)
+   clock_gettime(android_log_clockid(), &ts);
+ 
+   if (log_id == LOG_ID_SECURITY) {
+diff --git a/liblog/logprint.c b/liblog/logprint.c
+index b62f8b4..8895af7 100644
+--- a/liblog/logprint.c
++++ b/liblog/logprint.c
+@@ -218,7 +218,7 @@ LIBLOG_ABI_PUBLIC AndroidLogFormat* android_log_format_new() {
+   p_ret->year_output = false;
+   p_ret->zone_output = false;
+   p_ret->epoch_output = false;
+-#ifdef __ANDROID__
++#if defined(__ANDROID__) && !defined(ANDROID_HOST_BUILD)
+   p_ret->monotonic_output = android_log_clockid() == CLOCK_MONOTONIC;
+ #else
+   p_ret->monotonic_output = false;
+@@ -1583,7 +1583,7 @@ LIBLOG_ABI_PUBLIC char* android_log_formatLogLine(AndroidLogFormat* p_format,
+    */
+   now = entry->tv_sec;
+   nsec = entry->tv_nsec;
+-#if __ANDROID__
++#if defined(__ANDROID__) && !defined(ANDROID_HOST_BUILD)
+   if (p_format->monotonic_output) {
+     /* prevent convertMonotonic from being called if logd is monotonic */
+     if (android_log_clockid() != CLOCK_MONOTONIC) {
 diff --git a/libziparchive/zip_archive.cc b/libziparchive/zip_archive.cc
-index 986ee7208..aa579fc54 100644
+index 4559b32..64fad0f 100644
 --- a/libziparchive/zip_archive.cc
 +++ b/libziparchive/zip_archive.cc
-@@ -272,7 +272,7 @@ static int32_t MapCentralDirectory0(int fd, const char* debug_file_name,
+@@ -210,7 +210,7 @@ static int32_t MapCentralDirectory0(const char* debug_file_name, ZipArchive* arc
    if (static_cast<off64_t>(eocd->cd_start_offset) + eocd->cd_size > eocd_offset) {
      ALOGW("Zip: bad offsets (dir %" PRIu32 ", size %" PRIu32 ", eocd %" PRId64 ")",
-         eocd->cd_start_offset, eocd->cd_size, static_cast<int64_t>(eocd_offset));
+           eocd->cd_start_offset, eocd->cd_size, static_cast<int64_t>(eocd_offset));
 -#if defined(__ANDROID__)
 +#if defined(__ANDROID__) && !defined(ANDROID_HOST_BUILD)
      if (eocd->cd_start_offset + eocd->cd_size <= eocd_offset) {
        android_errorWriteLog(0x534e4554, "31251826");
      }
+@@ -327,7 +327,7 @@ static int32_t ParseZipArchive(ZipArchive* archive) {
+   for (uint16_t i = 0; i < num_entries; i++) {
+     if (ptr > cd_end - sizeof(CentralDirectoryRecord)) {
+       ALOGW("Zip: ran off the end (at %" PRIu16 ")", i);
+-#if defined(__ANDROID__)
++#if defined(__ANDROID__) && !defined(ANDROID_HOST_BUILD)
+       android_errorWriteLog(0x534e4554, "36392138");
+ #endif
+       return -1;
+@@ -389,7 +389,7 @@ static int32_t ParseZipArchive(ZipArchive* archive) {
+ 
+   if (lfh_start_bytes != LocalFileHeader::kSignature) {
+     ALOGW("Zip: Entry at offset zero has invalid LFH signature %" PRIx32, lfh_start_bytes);
+-#if defined(__ANDROID__)
++#if defined(__ANDROID__) && !defined(ANDROID_HOST_BUILD)
+     android_errorWriteLog(0x534e4554, "64211847");
+ #endif
+     return -1;

@@ -15,32 +15,38 @@ LOCAL_CFLAGS := \
     -Wvla \
     -Wexit-time-destructors \
     -fvisibility=hidden \
-    -DADB_REVISION='"shakalaca-$(shell date +%Y-%m-%d)-$(adb_version)"' \
-    -DADB_HOST=1 -DADB_HOST_ON_TARGET=1 -D_GNU_SOURCE
+    -DADB_VERSION='"shakalaca-$(shell date +%Y-%m-%d)-$(adb_version)"' \
+    -DADB_HOST=1 -DADB_HOST_ON_TARGET=1 -D_GNU_SOURCE -DANDROID_HOST_BUILD
 
 LOCAL_C_INCLUDES := \
     src/system/core/adb \
     src/system/core/include \
     src/system/core/mkbootimg \
+    src/external/libusb/include \
+    src/system/core/libcrypto_utils/include
 
 LOCAL_SRC_FILES := \
     src/system/core/adb/adb.cpp \
-    src/system/core/adb/adb_auth.cpp \
     src/system/core/adb/adb_io.cpp \
     src/system/core/adb/adb_listeners.cpp \
     src/system/core/adb/adb_trace.cpp \
     src/system/core/adb/adb_utils.cpp \
     src/system/core/adb/fdevent.cpp \
     src/system/core/adb/sockets.cpp \
+    src/system/core/adb/socket_spec.cpp \
+    src/system/core/adb/sysdeps/errno.cpp \
     src/system/core/adb/transport.cpp \
     src/system/core/adb/transport_local.cpp \
     src/system/core/adb/transport_usb.cpp \
     \
-    src/system/core/adb/get_my_path_linux.cpp \
     src/system/core/adb/sysdeps_unix.cpp \
-    src/system/core/adb/usb_linux.cpp \
+    src/system/core/adb/sysdeps/posix/network.cpp \
+    src/system/core/adb/client/usb_dispatch.cpp \
+    src/system/core/adb/client/usb_libusb.cpp \
+    src/system/core/adb/client/usb_linux.cpp \
     \
     src/system/core/adb/adb_auth_host.cpp \
+    src/system/core/adb/transport_mdns.cpp \
     \
     src/system/core/adb/diagnose_usb.cpp \
     \
@@ -59,7 +65,7 @@ LOCAL_SRC_FILES += \
     src/system/core/libutils/FileMap.cpp
 
 LOCAL_LDLIBS := -ldl
-LOCAL_STATIC_LIBRARIES := crypto decrepit base cutils log_fake
+LOCAL_STATIC_LIBRARIES := crypto decrepit base cutils log_fake mdnssd usb crypto_utils
 
 include $(BUILD_EXECUTABLE)
 

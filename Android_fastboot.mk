@@ -7,16 +7,17 @@ include $(CLEAR_VARS)
 LOCAL_MODULE := fastboot
 
 LOCAL_CFLAGS := \
+    -std=c++14 \
     -DANDROID_HOST_BUILD -DADB_HOST \
     -Wall -Wextra -Werror -Wunreachable-code \
-    -DFASTBOOT_REVISION='"shakalaca-$(shell date +%Y-%m-%d)-$(fastboot_version)"'
+    -DFASTBOOT_VERSION='"shakalaca-$(shell date +%Y-%m-%d)-$(fastboot_version)"'
 
 LOCAL_C_INCLUDES := \
     src/system/core/include \
     src/system/core/adb \
     src/system/core/mkbootimg \
     src/system/extras/f2fs_utils \
-    src/external/gtest/include
+    src/system/core/libziparchive/include
 
 LOCAL_SRC_FILES := \
     src/system/core/fastboot/bootimg_utils.cpp \
@@ -28,8 +29,7 @@ LOCAL_SRC_FILES := \
     src/system/core/fastboot/tcp.cpp \
     src/system/core/fastboot/udp.cpp \
     src/system/core/fastboot/util.cpp \
-    src/system/core/fastboot/usb_linux.cpp \
-    src/system/core/fastboot/util_linux.cpp
+    src/system/core/fastboot/usb_linux.cpp
 
 # libziparchive
 LOCAL_SRC_FILES += \
